@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1001156209192",
+    "project_id": "snakedetector-a99e1",
+    "storage_bucket": "snakedetector-a99e1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1001156209192:android:567cbb2f155fe5e3e3a31d",
+        "android_client_info": {
+          "package_name": "com.example.snakedetector"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBciX5jM_6FW-DFiHQ-T5Wy0qtLRaHw2p8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
