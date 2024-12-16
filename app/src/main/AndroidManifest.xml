@@ -8,7 +8,8 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
 
     <application
@@ -21,6 +22,18 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.SnakeDetector"
         tools:targetApi="31">
+        <activity
+            android:name=".Registerpage"
+            android:exported="false" />
+        <activity
+            android:name=".User"
+            android:exported="false"
+            tools:ignore="MissingClass" />
+        <activity
+            android:name=".Login"
+            android:exported="false" />
+
+
         <activity
             android:name=".MainActivity"
             android:exported="true">
