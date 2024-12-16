@@ -9,11 +9,14 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.snakedetector.model.UserEntity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.auth.FirebaseUser;
 
 import android.widget.ProgressBar;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 
 public class Registerpage extends AppCompatActivity {
@@ -23,6 +26,7 @@ public class Registerpage extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private ProgressBar progressBar;
 
+    private DatabaseReference databaseReference;
 
 
     @Override
@@ -34,6 +38,7 @@ public class Registerpage extends AppCompatActivity {
         // Initialize Firebase Auth
         mAuth = FirebaseAuth.getInstance();
 
+        databaseReference = FirebaseDatabase.getInstance("https://snakedetector-a99e1-default-rtdb.asia-southeast1.firebasedatabase.app/").getReference("Users");
 
         // Initialize views
         etName = findViewById(R.id.etName);
@@ -77,6 +82,9 @@ public class Registerpage extends AppCompatActivity {
                     if (task.isSuccessful()) {
                         // Registration successful
                         FirebaseUser user = mAuth.getCurrentUser();
+                        if (user != null) {
+                            saveUserToDatabase(user.getUid(), name, email);
+                        }
                         Toast.makeText(Registerpage.this,
                                 "User registered successfully: " + user.getEmail(),
                                 Toast.LENGTH_LONG).show();
@@ -95,5 +103,25 @@ public class Registerpage extends AppCompatActivity {
                 });
 
 
+    }
+    private void saveUserToDatabase(String userId, String name, String email) {
+        // Create a user object
+        UserEntity user = new UserEntity();
+        user.setUserName(name);
+        user.setEmail(email);
+
+        // Save the user data in Realtime Database under "Users/{userId}"
+        databaseReference.child(userId).setValue(user)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        Toast.makeText(Registerpage.this,
+                                "User data saved successfully",
+                                Toast.LENGTH_LONG).show();
+                    } else {
+                        Toast.makeText(Registerpage.this,
+                                "Failed to save user data: " + task.getException().getMessage(),
+                                Toast.LENGTH_LONG).show();
+                    }
+                });
     }
 }
