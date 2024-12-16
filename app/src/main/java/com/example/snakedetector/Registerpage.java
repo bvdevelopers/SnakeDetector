@@ -1,5 +1,7 @@
 package com.example.snakedetector;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
@@ -84,6 +86,10 @@ public class Registerpage extends AppCompatActivity {
                         FirebaseUser user = mAuth.getCurrentUser();
                         if (user != null) {
                             saveUserToDatabase(user.getUid(), name, email);
+                            saveLoginState(email);
+                            Intent intent = new Intent(Registerpage.this, User.class);
+                            startActivity(intent);
+                            finish();
                         }
                         Toast.makeText(Registerpage.this,
                                 "User registered successfully: " + user.getEmail(),
@@ -103,6 +109,13 @@ public class Registerpage extends AppCompatActivity {
                 });
 
 
+    }
+    private void saveLoginState(String userId) {
+        SharedPreferences sharedPreferences = getSharedPreferences("UserSession", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putBoolean("isLoggedIn", true);  // Login status
+        editor.putString("userId", userId);    // Save user ID
+        editor.apply();  // Commit changes
     }
     private void saveUserToDatabase(String userId, String name, String email) {
         // Create a user object

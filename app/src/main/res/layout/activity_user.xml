@@ -33,4 +33,16 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:text="Find Species" />
+
+
+    <ImageButton
+        android:id="@+id/btnLogout"
+        android:layout_width="48dp"
+    android:layout_height="48dp"
+    android:src="@drawable/logout"
+    android:scaleType="fitCenter"
+    android:adjustViewBounds="true"
+    android:background="@null"
+    android:contentDescription="Logout Button" />
+
 </LinearLayout>

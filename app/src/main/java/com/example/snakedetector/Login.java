@@ -2,6 +2,7 @@ package com.example.snakedetector;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
@@ -10,10 +11,14 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+
+import java.util.Map;
+import java.util.Set;
 
 public class Login extends AppCompatActivity {
 
@@ -21,11 +26,14 @@ public class Login extends AppCompatActivity {
     private Button btnLogin, btnRegister;
     private FirebaseAuth mAuth;
 
+
+
     @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+
 
         // Initialize Firebase Auth
         mAuth = FirebaseAuth.getInstance();
@@ -77,6 +85,10 @@ public class Login extends AppCompatActivity {
                         .addOnCompleteListener(task -> {
                             if (task.isSuccessful()) {
                                 FirebaseUser user = mAuth.getCurrentUser();
+                                if(user != null)
+                                {
+                                 saveLoginState(email);
+                                }
                                 Toast.makeText(Login.this, "Login Successful! Welcome, " + user.getEmail(), Toast.LENGTH_SHORT).show();
                                 Intent intent = new Intent(Login.this, User.class);
                                 startActivity(intent);
@@ -87,5 +99,12 @@ public class Login extends AppCompatActivity {
                         });
             }
         });
+    }
+    private void saveLoginState(String userId) {
+        SharedPreferences sharedPreferences = getSharedPreferences("UserSession", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putBoolean("isLoggedIn", true);  // Login status
+        editor.putString("userId", userId);    // Save user ID
+        editor.apply();  // Commit changes
     }
 }

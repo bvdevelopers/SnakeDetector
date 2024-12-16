@@ -1,4 +1,5 @@
 package com.example.snakedetector;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.activity.EdgeToEdge;
@@ -38,14 +39,42 @@ public class MainActivity extends AppCompatActivity {
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
-                Intent intent = new Intent(MainActivity.this, Login.class);
-                startActivity(intent);
-                finish();
+//                Intent intent = new Intent(MainActivity.this, Login.class);
+//                startActivity(intent);
+//                finish();
+                checkLoginState();
             }
         },3000);
 
 
     }
+    private void checkLoginState() {
+        SharedPreferences sharedPreferences = getSharedPreferences("UserSession", MODE_PRIVATE);
+        boolean isLoggedIn = sharedPreferences.getBoolean("isLoggedIn", false);
+
+        if (isLoggedIn) {
+            // User is logged in, navigate to the main screen
+            String userId = sharedPreferences.getString("userId", null);
+            navigateToMainScreen(userId);
+        } else {
+            // User is not logged in, show login/register screen
+            navigateToLoginScreen();
+        }
+    }
+
+    private void navigateToMainScreen(String userId) {
+        Intent intent = new Intent(this, User.class);
+        intent.putExtra("userId", userId);
+        startActivity(intent);
+        finish();
+    }
+
+    private void navigateToLoginScreen() {
+        Intent intent = new Intent(this, Login.class);
+        startActivity(intent);
+        finish();
+    }
+
     protected void onDestroy() {
         super.onDestroy();
         System.gc();

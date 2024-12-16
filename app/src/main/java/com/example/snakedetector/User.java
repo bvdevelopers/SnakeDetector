@@ -3,12 +3,14 @@ package com.example.snakedetector;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -46,6 +48,7 @@ public class User extends AppCompatActivity {
         @SuppressLint({"MissingInflatedId", "LocalSuppress"}) Button btnCaptureImage = findViewById(R.id.btnCaptureImage);
         @SuppressLint({"MissingInflatedId", "LocalSuppress"}) Button btnSelectImage = findViewById(R.id.btnSelectImage);
         @SuppressLint({"MissingInflatedId", "LocalSuppress"}) Button btnSendImage = findViewById(R.id.btnSendImage);
+        @SuppressLint({"MissingInflatedId", "LocalSuppress"}) ImageButton btnLogout = findViewById(R.id.btnLogout);
 
         imageView = findViewById(R.id.imageView);
 
@@ -75,6 +78,10 @@ public class User extends AppCompatActivity {
             } else {
                 Toast.makeText(this, "Please select or capture an image first!", Toast.LENGTH_SHORT).show();
             }
+        });
+
+        btnLogout.setOnClickListener(v->{
+            logoutUser();
         });
 
     }
@@ -174,4 +181,16 @@ public class User extends AppCompatActivity {
             }
         }).start();
     }
+    private void logoutUser() {
+        SharedPreferences sharedPreferences = getSharedPreferences("UserSession", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.clear();  // Clear all saved data
+        editor.apply();
+
+        // Navigate to login screen
+        Intent intent = new Intent(this, Login.class);
+        startActivity(intent);
+        finish();
+    }
+
 }
