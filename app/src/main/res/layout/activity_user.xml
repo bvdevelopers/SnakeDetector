@@ -5,44 +5,20 @@
     android:orientation="vertical"
     android:gravity="center"
     android:padding="16dp">
+    <androidx.camera.view.PreviewView
+        android:id="@+id/previewView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
-    <Button
-        android:id="@+id/btnCaptureImage"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Capture Image" />
-
-    <Button
-        android:id="@+id/btnSelectImage"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Select Image" />
-
-    <ImageView
-        android:id="@+id/imageView"
-        android:layout_width="300dp"
-        android:layout_height="300dp"
-        android:layout_marginTop="16dp"
-        android:scaleType="centerCrop"
-        android:contentDescription="Preview" />
-
-    <Button
-        android:id="@+id/btnSendImage"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Find Species" />
-
-
-    <ImageButton
-        android:id="@+id/btnLogout"
-        android:layout_width="48dp"
-    android:layout_height="48dp"
-    android:src="@drawable/logout"
-    android:scaleType="fitCenter"
-    android:adjustViewBounds="true"
-    android:background="@null"
-    android:contentDescription="Logout Button" />
+<!--    <ImageButton-->
+<!--        android:id="@+id/btnLogout"-->
+<!--        android:layout_width="48dp"-->
+<!--    android:layout_height="48dp"-->
+<!--    android:src="@drawable/logout"-->
+<!--    android:scaleType="fitCenter"-->
+<!--    android:adjustViewBounds="true"-->
+<!--    android:background="@null"-->
+<!--    android:contentDescription="Logout Button" />-->
+<!-- -->
 
 </LinearLayout>
