@@ -2,31 +2,96 @@ package com.example.snakedetector;
 
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.ImageFormat;
+import android.graphics.Rect;
+import android.graphics.YuvImage;
+import android.media.Image;
 import android.os.Bundle;
+import android.provider.MediaStore;
+import android.util.Log;
+import android.widget.MediaController;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.annotation.OptIn;
+import androidx.appcompat.app.AppCompatActivity;
+import android.graphics.Bitmap;
+import android.os.Bundle;
+import android.util.Base64;
+import android.widget.ImageView;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.camera.core.CameraControl;
+import androidx.camera.core.ExperimentalGetImage;
+import androidx.camera.core.Preview;
+import androidx.camera.core.UseCaseGroup;
+import androidx.camera.core.ViewPort;
+import androidx.camera.view.PreviewView;
+
+import com.bumptech.glide.Glide;
+import com.example.snakedetector.Interface.SnakeDetectionAPI;
+import com.example.snakedetector.model.CaptureResponse;
+import com.example.snakedetector.model.DetectionResponse;
+import com.example.snakedetector.model.ImageRequest;
+import com.google.common.util.concurrent.ListenableFuture;
+
+import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import android.media.Image;       // For the YUV_420_888 Image object
+import java.nio.ByteBuffer;       // For accessing plane buffers
+import android.graphics.YuvImage;        // For YUV-to-JPEG conversion
+import android.graphics.BitmapFactory;   // To decode the JPEG data into a Bitmap
+import android.graphics.Rect;            // For defining the region of the YUV image
+
+import android.graphics.Bitmap;
+import android.os.Bundle;
+import android.util.Base64;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
+//import androidx.appcompat.app.AppCompatActivity;
+import androidx.camera.core.Camera;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageProxy;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
 import androidx.core.content.ContextCompat;
-
-import com.google.common.util.concurrent.ListenableFuture;
-
-import java.nio.ByteBuffer;
-import java.util.concurrent.ExecutorService;
+//
+//import com.example.snakedetector.api.SnakeDetectionAPI;
+//import com.example.snakedetector.api.RetrofitClient;
+//import com.example.snakedetector.model.ImageRequest;
+//import com.example.snakedetector.model.DetectionResponse;
+import android.media.ToneGenerator;
+import android.media.AudioManager;
+//import java.io.ByteArrayOutputStream;
+//import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class User extends AppCompatActivity {
+//import retrofit2.Call;
+//import retrofit2.Callback;
+//import retrofit2.Response;
 
+public class User extends AppCompatActivity {
     private PreviewView previewView;
-    private SnakeDetector snakeDetector;
+    private TextView detectionMessage;
     private ExecutorService cameraExecutor;
+    private boolean isRequestInProgress = false;
+    private SnakeDetectionAPI api;
+    private ToneGenerator toneGenerator;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,76 +99,234 @@ public class User extends AppCompatActivity {
         setContentView(R.layout.activity_user);
 
         previewView = findViewById(R.id.previewView);
+        detectionMessage = findViewById(R.id.detectionMessage);
 
-        // Initialize the SnakeDetector
-        snakeDetector = new SnakeDetector(this);
-
-        // Set up the camera
-        setupCamera();
-
-        // Initialize camera executor
+        api = RetrofitClient.getClient().create(SnakeDetectionAPI.class);
         cameraExecutor = Executors.newSingleThreadExecutor();
+        toneGenerator = new ToneGenerator(AudioManager.STREAM_NOTIFICATION, 100);
+
+        try {
+            startCamera();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
+    private void bindPreview(@NonNull ProcessCameraProvider cameraProvider) {
+        Preview preview = new Preview.Builder().build();
+        preview.setSurfaceProvider(previewView.getSurfaceProvider());
 
-    private void setupCamera() {
-        ListenableFuture<ProcessCameraProvider> cameraProviderFuture = ProcessCameraProvider.getInstance(this);
-        cameraProviderFuture.addListener(() -> {
-            try {
-                ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
-
-                // Bind Preview and Analysis Use Cases
-                bindCameraUseCases(cameraProvider);
-
-            } catch (Exception e) {
-                Toast.makeText(this, "Error setting up camera: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        }, ContextCompat.getMainExecutor(this));
-    }
-
-    private void bindCameraUseCases(@NonNull ProcessCameraProvider cameraProvider) {
-        // Camera Selector (Rear Camera)
         CameraSelector cameraSelector = new CameraSelector.Builder()
                 .requireLensFacing(CameraSelector.LENS_FACING_BACK)
                 .build();
 
-        // Preview Use Case
-        androidx.camera.core.Preview preview = new androidx.camera.core.Preview.Builder().build();
-        preview.setSurfaceProvider(previewView.getSurfaceProvider());
+// Bind camera to lifecycle
+        cameraProvider.bindToLifecycle(this, cameraSelector, preview);
+    }
 
-        // Image Analysis Use Case
-        ImageAnalysis imageAnalysis = new ImageAnalysis.Builder()
-                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .build();
+    private void startCamera() {
+        ListenableFuture<ProcessCameraProvider> cameraProviderFuture = ProcessCameraProvider.getInstance(this);
+        cameraProviderFuture.addListener(() -> {
+            try {
+                ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
+                Log.d("CameraX", "Camera provider initialized successfully"); // Use get() to retrieve the provider
 
-        imageAnalysis.setAnalyzer(cameraExecutor, image -> {
-            Bitmap bitmap = imageProxyToBitmap(image); // Convert frame to Bitmap
-            if (bitmap != null) {
-                snakeDetector.detectSnake(bitmap); // Detect snake in the frame
+                // Select the back camera (you can change to front camera if needed)
+                CameraSelector cameraSelector = new CameraSelector.Builder()
+                        .requireLensFacing(CameraSelector.LENS_FACING_BACK)
+                        .build();
+
+                // Create a Preview use case
+                Preview preview = new Preview.Builder()
+                        .build();
+
+                // Create an ImageAnalysis use case (for analyzing frames)
+                ImageAnalysis imageAnalysis = new ImageAnalysis.Builder()
+                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                        .build();
+
+                // Set up the analyzer
+                imageAnalysis.setAnalyzer(cameraExecutor, this::analyzeImage);
+
+                // Set up the surface provider to display the camera feed in PreviewView
+                preview.setSurfaceProvider(previewView.getSurfaceProvider());
+
+                // Unbind any previously bound use cases
+                cameraProvider.unbindAll();
+
+                // Bind Preview and ImageAnalysis to the lifecycle
+                cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageAnalysis);
+
+            } catch (Exception e) {
+                Log.e("CameraX", "Camera initialization failed: " + e.getMessage());
+                Toast.makeText(this, "Camera initialization failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
-            image.close();
-        });
+        }, ContextCompat.getMainExecutor(this));
+    }
 
-        // Bind Use Cases to CameraProvider
-        cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageAnalysis);
+
+    private void analyzeImage(@NonNull ImageProxy image) {
+        if (isRequestInProgress) {
+            image.close();
+            return;
+        }
+
+        Bitmap bitmap = imageProxyToBitmap(image);
+        String base64Image = getBase64FromBitmap(bitmap);
+
+        isRequestInProgress = true;
+        ImageRequest img = new ImageRequest(base64Image);
+        api.detectSnake(img).enqueue(new Callback<DetectionResponse>() {
+            @Override
+            public void onResponse(Call<DetectionResponse> call, Response<DetectionResponse> response) {
+                isRequestInProgress = false;
+                if (response.isSuccessful() && response.body() != null) {
+                    if (!response.body().getDetections().isEmpty()) {
+                        Log.e("ers image : {}",img.getImage());
+
+                        toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP, 200);
+
+                        runOnUiThread(() -> detectionMessage.setVisibility(TextView.VISIBLE));
+                    } else {
+                        runOnUiThread(() -> detectionMessage.setVisibility(TextView.GONE));
+                    }
+                }
+                image.close();
+            }
+
+            @Override
+            public void onFailure(Call<DetectionResponse> call, Throwable t) {
+                isRequestInProgress = false;
+                image.close();
+                Log.e("Error : {}",t.getMessage());
+                Toast.makeText(User.this, "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private Bitmap imageProxyToBitmap(ImageProxy imageProxy) {
         @SuppressLint("UnsafeOptInUsageError")
-        ImageProxy.PlaneProxy[] planes = imageProxy.getPlanes();
-        if (planes != null && planes.length > 0) {
-            ByteBuffer buffer = planes[0].getBuffer();
-            byte[] bytes = new byte[buffer.remaining()];
-            buffer.get(bytes);
-            return BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+        Image image = imageProxy.getImage();
+
+        if (image != null) {
+            return convertImageProxyToBitmap(imageProxy);
         }
         return null;
     }
+
+//    private Bitmap convertImageProxyToBitmap(ImageProxy imageProxy) {
+//        @SuppressLint("UnsafeOptInUsageError")
+//        Image image = imageProxy.getImage();
+//
+//        if (image != null) {
+//            // Get the YUV image data
+//            ByteBuffer buffer = image.getPlanes()[0].getBuffer();
+//            int bufferSize = buffer.remaining();
+//
+//            // Log the buffer size
+//            Log.d("convertImageProxy", "Buffer size: " + bufferSize);
+//
+//            if (bufferSize == 0) {
+//                Log.e("convertImageProxy", "Buffer is empty.");
+//                return null;
+//            }
+//
+//            byte[] bytes = new byte[bufferSize];
+//            buffer.get(bytes);
+//
+//            // Convert YUV to NV21 or RGB format if necessary
+//            Bitmap bitmap = yuvToBitmap(bytes, image.getWidth(), image.getHeight());
+//
+//            if (bitmap == null) {
+//                Log.e("convertImageProxy", "Failed to decode YUV data.");
+//            }
+//
+//            return bitmap;
+//        }
+//
+//        Log.e("convertImageProxy", "Image is null.");
+//        return null;
+//    }
+private Bitmap convertImageProxyToBitmap(ImageProxy imageProxy) {
+    @OptIn(markerClass = ExperimentalGetImage.class) Image image = imageProxy.getImage();
+    if (image != null) {
+        // Convert ImageProxy to NV21 byte array
+        byte[] nv21 = convertImageToNV21(image);
+        if (nv21 != null) {
+            return yuvToBitmap(nv21, image.getWidth(), image.getHeight());
+        }
+    }
+    Log.e("convertImageProxy", "Failed to convert ImageProxy to Bitmap");
+    return null;
+}
+
+    private byte[] convertImageToNV21(Image image) {
+        // Ensure proper conversion from YUV_420_888 to NV21 format
+        // Implementation can vary based on camera frame format
+        return YUV_420_888toNV21(image); // Helper method
+    }
+
+    private byte[] YUV_420_888toNV21(Image image) {
+        int width = image.getWidth();
+        int height = image.getHeight();
+
+        Image.Plane[] planes = image.getPlanes();
+        ByteBuffer yBuffer = planes[0].getBuffer(); // Y
+        ByteBuffer uBuffer = planes[1].getBuffer(); // U
+        ByteBuffer vBuffer = planes[2].getBuffer(); // V
+
+        int ySize = yBuffer.remaining();
+        int uSize = uBuffer.remaining();
+        int vSize = vBuffer.remaining();
+
+        byte[] nv21 = new byte[ySize + uSize + vSize];
+
+        // Copy Y data
+        yBuffer.get(nv21, 0, ySize);
+
+        // Interleave U and V data
+        byte[] uBytes = new byte[uSize];
+        byte[] vBytes = new byte[vSize];
+        uBuffer.get(uBytes);
+        vBuffer.get(vBytes);
+
+        for (int i = 0; i < uSize; i++) {
+            nv21[ySize + (i * 2)] = vBytes[i];
+            nv21[ySize + (i * 2) + 1] = uBytes[i];
+        }
+
+        return nv21;
+    }
+
+    // Convert YUV to Bitmap (NV21 or RGB)
+    private Bitmap yuvToBitmap(byte[] yuvData, int width, int height) {
+        try {
+            YuvImage yuvImage = new YuvImage(yuvData, ImageFormat.NV21, width, height, null);
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            yuvImage.compressToJpeg(new Rect(0, 0, width, height), 100, out); // Ensure compression quality
+            byte[] jpegData = out.toByteArray();
+            return BitmapFactory.decodeByteArray(jpegData, 0, jpegData.length);
+        } catch (Exception e) {
+            Log.e("yuvToBitmap", "Error converting YUV to Bitmap: " + e.getMessage());
+            return null;
+        }
+    }
+
+
+    private String getBase64FromBitmap(Bitmap bitmap) {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+        return Base64.encodeToString(outputStream.toByteArray(), Base64.DEFAULT);
+    }
+
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         if (cameraExecutor != null) {
             cameraExecutor.shutdown();
+        }
+        if (toneGenerator != null) {
+            toneGenerator.release();
         }
     }
 }
