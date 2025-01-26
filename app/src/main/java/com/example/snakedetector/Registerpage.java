@@ -23,7 +23,7 @@ import com.google.firebase.database.FirebaseDatabase;
 
 public class Registerpage extends AppCompatActivity {
 
-    private EditText etName, etEmail, etPassword;
+    private EditText etName, etEmail, etPassword, phno;
     private Button btnRegister;
     private FirebaseAuth mAuth;
     private ProgressBar progressBar;
@@ -48,6 +48,7 @@ public class Registerpage extends AppCompatActivity {
         etPassword = findViewById(R.id.etPassword);
         btnRegister = findViewById(R.id.btnRegister);
         progressBar = findViewById(R.id.progressBar);
+        phno = findViewById(R.id.phno);
 
 
         // Set click listener for the register button
@@ -63,6 +64,7 @@ public class Registerpage extends AppCompatActivity {
         String name = etName.getText().toString().trim();
         String email = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
+        String phone = phno.getText().toString().trim();
 
         // Input validation
         if (TextUtils.isEmpty(name)) {
@@ -76,6 +78,9 @@ public class Registerpage extends AppCompatActivity {
         if (TextUtils.isEmpty(password)) {
             etPassword.setError("Password is required");
             return;
+        }  if (TextUtils.isEmpty(phone) || phone.length() != 10 ) {
+            etPassword.setError("Phone Number is required or invalid");
+            return;
         }
         // Firebase user registration
         mAuth.createUserWithEmailAndPassword(email, password)
@@ -86,7 +91,7 @@ public class Registerpage extends AppCompatActivity {
                         FirebaseUser user = mAuth.getCurrentUser();
                         if (user != null) {
                             saveUserToDatabase(user.getUid(), name, email);
-                            saveLoginState(email);
+                            saveLoginState(email,phone);
                             Intent intent = new Intent(Registerpage.this, User.class);
                             startActivity(intent);
                             finish();
@@ -110,11 +115,12 @@ public class Registerpage extends AppCompatActivity {
 
 
     }
-    private void saveLoginState(String userId) {
+    private void saveLoginState(String userId,String phone) {
         SharedPreferences sharedPreferences = getSharedPreferences("UserSession", MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putBoolean("isLoggedIn", true);  // Login status
         editor.putString("userId", userId);    // Save user ID
+        editor.putString("phone", phone);
         editor.apply();  // Commit changes
     }
     private void saveUserToDatabase(String userId, String name, String email) {

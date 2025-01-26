@@ -6,7 +6,10 @@
         android:id="@+id/previewView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_gravity="center" />
+        android:layout_gravity="center"
+        android:layout_y="0dp">
+
+    </androidx.camera.view.PreviewView>
 
 
     <TextView
@@ -22,4 +25,16 @@
         android:textColor="@android:color/white"
         android:textSize="40dp"
         android:visibility="gone"/>
+
+    <ImageButton
+        android:id="@+id/phno"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_gravity="center_vertical"
+        android:layout_marginLeft="5dp"
+        android:adjustViewBounds="true"
+        android:maxHeight="30dp"
+        android:maxWidth="30dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/phone" />
 </AbsoluteLayout>

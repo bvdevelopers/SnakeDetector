@@ -3,6 +3,7 @@ package com.example.snakedetector;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
@@ -11,8 +12,17 @@ import android.graphics.YuvImage;
 import android.media.Image;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.telephony.SmsManager;
+import android.telephony.gsm.SmsMessage;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.MediaController;
+import android.widget.PopupWindow;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -90,21 +100,31 @@ public class User extends AppCompatActivity {
     private boolean isRequestInProgress = false;
     private SnakeDetectionAPI api;
     private ToneGenerator toneGenerator;
+    private ImageButton phone_btn;
 
-
+    String phone;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user);
+        SharedPreferences sharedPreferences = getSharedPreferences("UserSession", MODE_PRIVATE);
+        phone = sharedPreferences.getString("phone", "");
 
         previewView = findViewById(R.id.previewView);
         detectionMessage = findViewById(R.id.detectionMessage);
+        phone_btn = findViewById(R.id.phno);
 
         api = RetrofitClient.getClient().create(SnakeDetectionAPI.class);
         cameraExecutor = Executors.newSingleThreadExecutor();
         toneGenerator = new ToneGenerator(AudioManager.STREAM_NOTIFICATION, 100);
 
+        phone_btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showPopup();
+            }
+        });
         try {
             startCamera();
         } catch (Exception e) {
@@ -162,7 +182,40 @@ public class User extends AppCompatActivity {
             }
         }, ContextCompat.getMainExecutor(this));
     }
+    private void showPopup() {
+        // Inflate the popup layout
+        LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
+        View popupView = inflater.inflate(R.layout.popup_layout, null);
 
+        // Create the popup window
+        PopupWindow popupWindow = new PopupWindow(
+                popupView,
+                RelativeLayout.LayoutParams.WRAP_CONTENT,
+                RelativeLayout.LayoutParams.WRAP_CONTENT,
+                true
+        );
+
+        // Find elements inside the popup
+        EditText editTextPopup = popupView.findViewById(R.id.editTextPopup);
+        Button buttonPopup = popupView.findViewById(R.id.buttonPopup);
+        Button close = popupView.findViewById(R.id.close);
+        editTextPopup.setText(phone);
+        // Set button click listener
+        buttonPopup.setOnClickListener(v -> {
+            phone = editTextPopup.getText().toString();
+            SharedPreferences sharedPreferences = getSharedPreferences("UserSession", MODE_PRIVATE);
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putString("phone", editTextPopup.getText().toString());
+            editor.apply();
+            Toast.makeText(this,"Alert Number Changed to "+editTextPopup.getText().toString(),Toast.LENGTH_LONG).show();
+        });
+        close.setOnClickListener(v -> {
+            popupWindow.dismiss(); // Close the popup
+        });
+
+        // Show the popup window
+        popupWindow.showAtLocation(findViewById(android.R.id.content), 0, 0, 0);
+    }
 
     private void analyzeImage(@NonNull ImageProxy image) {
         if (isRequestInProgress) {
@@ -182,10 +235,13 @@ public class User extends AppCompatActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     if (!response.body().getDetections().isEmpty()) {
                         Log.e("ers image : {}",img.getImage());
-
                         toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP, 200);
-
                         runOnUiThread(() -> detectionMessage.setVisibility(TextView.VISIBLE));
+                        SmsManager smsManager= SmsManager.getDefault();
+                        smsManager.sendTextMessage(phone,null,"💀!Warning A 🐍snake detected in your Android Cam!",null,null);
+
+
+
                     } else {
                         runOnUiThread(() -> detectionMessage.setVisibility(TextView.GONE));
                     }
