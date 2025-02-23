@@ -100,7 +100,9 @@ public class User extends AppCompatActivity {
     private boolean isRequestInProgress = false;
     private SnakeDetectionAPI api;
     private ToneGenerator toneGenerator;
-    private ImageButton phone_btn;
+    private ImageButton phone_btn, logout_btn;
+    SharedPreferences.Editor editor;
+    SharedPreferences sharedPreferences;
 
     String phone;
 
@@ -108,12 +110,16 @@ public class User extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user);
-        SharedPreferences sharedPreferences = getSharedPreferences("UserSession", MODE_PRIVATE);
+        sharedPreferences = getSharedPreferences("UserSession", MODE_PRIVATE);
+        editor = sharedPreferences.edit();
+
         phone = sharedPreferences.getString("phone", "");
+
 
         previewView = findViewById(R.id.previewView);
         detectionMessage = findViewById(R.id.detectionMessage);
         phone_btn = findViewById(R.id.phno);
+        logout_btn = findViewById(R.id.logout);
 
         api = RetrofitClient.getClient().create(SnakeDetectionAPI.class);
         cameraExecutor = Executors.newSingleThreadExecutor();
@@ -123,6 +129,18 @@ public class User extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 showPopup();
+            }
+        });
+        logout_btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(User.this,Login.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+
+                editor.clear();
+                editor.apply();
+                startActivity(intent);
+                finish();
             }
         });
         try {
@@ -203,8 +221,7 @@ public class User extends AppCompatActivity {
         // Set button click listener
         buttonPopup.setOnClickListener(v -> {
             phone = editTextPopup.getText().toString();
-            SharedPreferences sharedPreferences = getSharedPreferences("UserSession", MODE_PRIVATE);
-            SharedPreferences.Editor editor = sharedPreferences.edit();
+
             editor.putString("phone", editTextPopup.getText().toString());
             editor.apply();
             Toast.makeText(this,"Alert Number Changed to "+editTextPopup.getText().toString(),Toast.LENGTH_LONG).show();

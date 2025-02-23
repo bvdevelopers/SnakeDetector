@@ -7,10 +7,31 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="center"
-        android:layout_y="0dp">
+        android:layout_y="0dp" />
 
-    </androidx.camera.view.PreviewView>
+    <ImageButton
+        android:id="@+id/phno"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_x="10dp"
+        android:layout_y="10dp"
+        android:adjustViewBounds="true"
+        android:maxHeight="30dp"
+        android:maxWidth="30dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/phone" />
 
+    <ImageButton
+        android:id="@+id/logout"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_x="350dp"
+    android:layout_y="10dp"
+    android:adjustViewBounds="true"
+    android:maxWidth="30dp"
+    android:maxHeight="30dp"
+    android:scaleType="fitCenter"
+    android:src="@drawable/logout" />
 
     <TextView
         android:id="@+id/detectionMessage"
@@ -24,17 +45,5 @@
         android:text="Snake Detected!"
         android:textColor="@android:color/white"
         android:textSize="40dp"
-        android:visibility="gone"/>
-
-    <ImageButton
-        android:id="@+id/phno"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:layout_gravity="center_vertical"
-        android:layout_marginLeft="5dp"
-        android:adjustViewBounds="true"
-        android:maxHeight="30dp"
-        android:maxWidth="30dp"
-        android:scaleType="fitCenter"
-        android:src="@drawable/phone" />
+        android:visibility="gone" />
 </AbsoluteLayout>

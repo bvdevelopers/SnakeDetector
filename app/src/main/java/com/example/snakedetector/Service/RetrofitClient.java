@@ -2,7 +2,7 @@ package com.example.snakedetector.Service;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 public class RetrofitClient {
-    private static final String BASE_URL = "https://snake-detection-api.onrender.com";
+    private static final String BASE_URL = "http://192.168.168.125:8000";
     private static Retrofit retrofit;
 
     public static Retrofit getRetrofitInstance() {

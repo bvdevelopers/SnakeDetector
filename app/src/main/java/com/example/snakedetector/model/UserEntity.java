@@ -3,6 +3,7 @@ package com.example.snakedetector.model;
 public class UserEntity {
     public String userName;
     public String email;
+    private Object phonenumber;
 
     public String getEmail() {
         return email;
@@ -18,5 +19,8 @@ public class UserEntity {
 
     public void setUserName(String userName) {
         this.userName = userName;
+    }
+
+    public void setPhoneNumber(String phone) { this.phonenumber = phonenumber;
     }
 }

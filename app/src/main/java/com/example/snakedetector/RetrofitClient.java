@@ -4,7 +4,7 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class RetrofitClient {
-    private static final String BASE_URL = "https://snake-alert.onrender.com"; // Replace with Flask API URL
+    private static final String BASE_URL = "http://192.168.217.125:8000"; // Replace with Flask API URL
     private static Retrofit retrofit;
 
     public static Retrofit getClient() {

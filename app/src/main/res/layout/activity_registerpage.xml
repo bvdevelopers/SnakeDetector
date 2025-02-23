@@ -5,8 +5,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp"
-    tools:context=".Registerpage"
-    tools:ignore="ExtraText">
+    tools:context=".Registerpage">
 
     <TextView
         android:id="@+id/tvTitle"
@@ -45,18 +44,20 @@
         android:layout_marginTop="8dp" />
 
     <EditText
+        android:id="@+id/phno"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Alert Reciving Number"
+        android:hint="Alert Receiving Number"
         android:inputType="phone"
-        android:id="@+id/phno"
-        />
+        android:padding="10dp"
+        android:layout_marginTop="8dp" />
 
     <Button
         android:id="@+id/btnRegister"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Register"  />
+        android:text="Register"
+        android:layout_marginTop="16dp" />
 
     <ProgressBar
         android:id="@+id/progressBar"
