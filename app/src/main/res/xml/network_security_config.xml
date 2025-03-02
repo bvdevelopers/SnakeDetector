@@ -1,6 +1,7 @@
 <network-security-config>
     <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true"> 192.168.217.125</domain>
-        <domain includeSubdomains="true"> 192.168.217.125:8000</domain>
+        <domain includeSubdomains="true">192.168.29.187</domain>
+        <domain includeSubdomains="true">192.168.29.187:8000</domain>
+        <domain includeSubdomains="true">192.168.29.187:5000</domain>
     </domain-config>
 </network-security-config>

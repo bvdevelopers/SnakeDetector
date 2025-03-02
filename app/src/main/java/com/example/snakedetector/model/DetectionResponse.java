@@ -41,5 +41,10 @@ public class DetectionResponse {
         public void setBox(int[] box) {
             this.box = box;
         }
+
+//        public List<String> getDetections() {
+//            return detections;
+//        }
+
     }
 }

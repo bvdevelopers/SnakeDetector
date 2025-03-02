@@ -23,7 +23,7 @@ import java.util.HashMap;
 
 public class Registerpage extends AppCompatActivity {
 
-    private EditText etName, etEmail, etPassword, etPhone;
+    private EditText etName, etEmail, etPassword, etPhone, altphno1,altphno2,altphno3;
     private Button btnRegister;
     private FirebaseAuth mAuth;
     private ProgressBar progressBar;
@@ -45,6 +45,9 @@ public class Registerpage extends AppCompatActivity {
         etPhone = findViewById(R.id.phno);
         btnRegister = findViewById(R.id.btnRegister);
         progressBar = findViewById(R.id.progressBar);
+        altphno1=findViewById(R.id.phno1);
+        altphno2=findViewById(R.id.phno2);
+        altphno3=findViewById(R.id.phno3);
 
         // Set click listener for the register button
         btnRegister.setOnClickListener(v -> registerUser());
@@ -55,6 +58,9 @@ public class Registerpage extends AppCompatActivity {
         String email = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
         String phone = etPhone.getText().toString().trim();
+        String altpno1 = altphno1.getText().toString().trim();
+        String altpno2 = altphno2.getText().toString().trim();
+        String altpno3 = altphno3.getText().toString().trim();
 
         // Input validation
         if (TextUtils.isEmpty(name)) {
@@ -87,7 +93,7 @@ public class Registerpage extends AppCompatActivity {
                     if (task.isSuccessful()) {
                         FirebaseUser user = mAuth.getCurrentUser();
                         if (user != null) {
-                            sendEmailVerification(user, name, email, phone);
+                            sendEmailVerification(user, name, email, phone,altpno1,altpno2,altpno3);
                         }
                     } else {
                         if (task.getException() instanceof FirebaseAuthUserCollisionException) {
@@ -99,11 +105,11 @@ public class Registerpage extends AppCompatActivity {
                 });
     }
 
-    private void sendEmailVerification(FirebaseUser user, String name, String email, String phone) {
+    private void sendEmailVerification(FirebaseUser user, String name, String email, String phone,String altpno1,String altpno2,String altpno3) {
         user.sendEmailVerification().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 Toast.makeText(Registerpage.this, "Verification email sent. Please check your inbox.", Toast.LENGTH_LONG).show();
-                saveUserToDatabase(user.getUid(), name, email, phone);
+                saveUserToDatabase(user.getUid(), name, email, phone,altpno1,altpno2,altpno3);
                 saveLoginState(email, phone);
             } else {
                 Toast.makeText(Registerpage.this, "Failed to send verification email: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
@@ -132,7 +138,7 @@ public class Registerpage extends AppCompatActivity {
         editor.apply();
     }
 
-    private void saveUserToDatabase(String userId, String name, String email, String phone) {
+    private void saveUserToDatabase(String userId, String name, String email, String phone, String altpno1,String altpno2,String altpno3) {
         // Create a HashMap to store user data
         HashMap<String, Object> userData = new HashMap<>();
         userData.put("userId", userId);
@@ -140,6 +146,12 @@ public class Registerpage extends AppCompatActivity {
         userData.put("email", email);
         userData.put("phoneNumber", phone);
         userData.put("timestamp", System.currentTimeMillis()); // Store registration time
+        altpno1 = altpno1.isEmpty()?"":altpno1;
+        altpno2 = altpno2.isEmpty()?"":altpno2;
+        altpno3 = altpno3.isEmpty()?"":altpno3;
+        userData.put("altPhnno1",altpno1);
+        userData.put("altPhnno2",altpno2);
+        userData.put("altPhnno3",altpno3);
 
         // Store the data in Firebase Realtime Database
         databaseReference.child(userId).setValue(userData)
